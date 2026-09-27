@@ -102,6 +102,60 @@ Per submission guidelines, access has been granted to:
 
 ---
 
+## 🚀 Live Deployment
+
+| Service | URL |
+|:--------|:----|
+| **Frontend (Vercel)** | **[https://reachinbox-e44m.vercel.app](https://reachinbox-e44m.vercel.app)** |
+| **Backend API** | Running locally via Cloudflare Tunnel (backend must be running — see Evaluator Guide below) |
+| **Github Repository** | [https://github.com/Prajwalgb99/Reachinbox](https://github.com/Prajwalgb99/Reachinbox) |
+
+> **Frontend is deployed on Vercel**. The backend runs on your local machine or via a Cloudflare Tunnel and is connected at runtime. See the Evaluator Guide below for the 60-second setup.
+
+---
+
+## 🧑‍⚖️ Evaluator / Reviewer Quick-Start Guide
+
+### ⚡ Option 1 — Instant Demo (No Setup Required)
+
+The login page has a built-in **"⚡ Instant Demo / Evaluator Login"** button that bypasses Google OAuth entirely and logs you straight into the dashboard with a pre-seeded evaluator account.
+
+**However**, to see live email scheduling, BullMQ queue dispatch, and Slack alerts, you need the backend running. Here is the fastest path:
+
+**Prerequisites**: Docker Desktop + Node.js v18+ installed.
+
+```bash
+# 1. Clone the repo
+git clone https://github.com/Prajwalgb99/Reachinbox.git
+cd Reachinbox
+
+# 2. Start PostgreSQL, Redis, and Elasticsearch (one command)
+docker compose up -d
+
+# 3. Install and start the backend (runs migrations automatically on first boot)
+cd backend
+npm install
+npm run migrate:dev   # Only needed first time
+npm run dev
+```
+
+Then open **[http://localhost:3000/login](http://localhost:3000/login)** (local frontend) **OR** visit **[https://reachinbox-e44m.vercel.app/login](https://reachinbox-e44m.vercel.app/login)** (Vercel) and click **⚡ Instant Demo / Evaluator Login**.
+
+---
+
+### 🌍 Option 2 — Full Cloud Access (Connect Vercel to Local Backend)
+
+To expose your local backend to the live Vercel frontend over HTTPS:
+
+```bash
+# In a separate terminal (after npm run dev is running):
+npx cloudflared tunnel --url http://localhost:4000
+```
+
+This generates a public HTTPS URL (e.g. `https://xxx.trycloudflare.com`). Set this as `NEXT_PUBLIC_API_URL` in your Vercel project's **Environment Variables**, then redeploy. The live Vercel site will then connect to your local backend with full OAuth, email scheduling, and queue visibility.
+
+---
+
 ## 🛠️ Setup & Running Locally
 
 ### Prerequisites
