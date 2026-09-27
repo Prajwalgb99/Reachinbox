@@ -1,29 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { API_BASE, api } from "@/lib/api";
+import { API_BASE } from "@/lib/api";
 
 export default function LoginPage() {
-  const router = useRouter();
-  const [demoLoading, setDemoLoading] = useState(false);
-
-  const handleDemoLogin = async () => {
-    setDemoLoading(true);
-    try {
-      const res = await api.demoLogin();
-      if (res.token) {
-        localStorage.setItem("session_token", res.token);
-      }
-      router.push("/dashboard");
-    } catch (err) {
-      console.error("Demo login failed", err);
-      alert("Could not connect to backend. Please ensure backend is running.");
-    } finally {
-      setDemoLoading(false);
-    }
-  };
-
   const handleGoogleLogin = () => {
     const origin = typeof window !== "undefined" ? window.location.origin : "";
     window.location.href = `${API_BASE}/api/auth/google?returnTo=${encodeURIComponent(origin)}`;
@@ -57,8 +36,8 @@ export default function LoginPage() {
           ReachInbox Cold Email Outreach & Job Scheduler
         </p>
 
-        {/* Login CTA Options */}
-        <div className="mt-8 space-y-3">
+        {/* Google OAuth Login CTA (Figma Frame 1) */}
+        <div className="mt-8 space-y-4">
           <button
             onClick={handleGoogleLogin}
             className="w-full flex items-center justify-center gap-3 py-3 px-6 rounded-full border border-zinc-200 bg-white text-zinc-700 font-semibold text-sm hover:bg-zinc-50 hover:border-zinc-300 shadow-soft active:scale-[0.98] transition-all"
@@ -82,15 +61,6 @@ export default function LoginPage() {
               />
             </svg>
             <span>Login with Google</span>
-          </button>
-
-          <button
-            onClick={handleDemoLogin}
-            disabled={demoLoading}
-            className="w-full flex items-center justify-center gap-2 py-3 px-6 rounded-full bg-zinc-900 text-white font-semibold text-sm hover:bg-zinc-800 shadow-soft active:scale-[0.98] transition-all disabled:opacity-50"
-          >
-            <span>⚡</span>
-            <span>{demoLoading ? "Logging in..." : "Instant Demo / Evaluator Login"}</span>
           </button>
         </div>
 
@@ -122,3 +92,4 @@ export default function LoginPage() {
     </div>
   );
 }
+

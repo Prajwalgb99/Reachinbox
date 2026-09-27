@@ -74,32 +74,6 @@ authRouter.get("/google/callback", async (req, res) => {
   }
 });
 
-authRouter.post("/demo-login", async (req, res) => {
-  try {
-    const { rows } = await pool.query(
-      `INSERT INTO users (google_id, email, name, avatar_url)
-       VALUES ($1, $2, $3, $4)
-       ON CONFLICT (google_id) DO UPDATE
-         SET email = EXCLUDED.email, name = EXCLUDED.name, avatar_url = EXCLUDED.avatar_url
-       RETURNING id, email, name, avatar_url`,
-      ["demo_evaluator", "evaluator@reachinbox.ai", "ReachInbox Evaluator", "https://api.dicebear.com/7.x/bottts/svg?seed=reachinbox"]
-    );
-    const user = rows[0];
-    const sessionToken = jwt.sign({ userId: user.id }, env.jwtSecret, { expiresIn: "7d" });
-    const isSecure = env.frontendUrl.startsWith("https://") || req.secure;
-    res.cookie("session", sessionToken, {
-      httpOnly: true,
-      sameSite: isSecure ? "none" : "lax",
-      secure: isSecure,
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
-    res.json({ user, token: sessionToken });
-  } catch (err) {
-    console.error("Demo login error", err);
-    res.status(500).json({ error: "Could not create demo session" });
-  }
-});
-
 authRouter.post("/logout", (req, res) => {
   const isSecure = env.frontendUrl.startsWith("https://") || req.secure;
   res.clearCookie("session", {

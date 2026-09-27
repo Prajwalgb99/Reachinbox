@@ -58,7 +58,6 @@ export interface SentEmail {
 
 export const api = {
   me: () => request<{ user: User }>("/api/auth/me"),
-  demoLogin: () => request<{ user: User; token: string }>("/api/auth/demo-login", { method: "POST" }),
   logout: () => {
     if (typeof window !== "undefined") localStorage.removeItem("session_token");
     return request<{ ok: true }>("/api/auth/logout", { method: "POST" });
