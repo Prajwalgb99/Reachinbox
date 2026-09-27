@@ -13,17 +13,29 @@ const oauthClient = new OAuth2Client(
 );
 
 authRouter.get("/google", (req, res) => {
+  const referer = req.headers.referer ? new URL(req.headers.referer).origin : "";
+  const returnTo = (req.query.returnTo as string) || referer || env.frontendUrl;
+  const state = Buffer.from(JSON.stringify({ returnTo })).toString("base64");
   const url = oauthClient.generateAuthUrl({
     access_type: "online",
     scope: ["openid", "email", "profile"],
     prompt: "select_account",
+    state,
   });
   res.redirect(url);
 });
 
 authRouter.get("/google/callback", async (req, res) => {
-  const { code } = req.query as { code?: string };
-  if (!code) return res.redirect(`${env.frontendUrl}/login?error=missing_code`);
+  const { code, state } = req.query as { code?: string; state?: string };
+  let targetFrontend = env.frontendUrl;
+  if (state) {
+    try {
+      const parsed = JSON.parse(Buffer.from(state, "base64").toString("utf-8"));
+      if (parsed.returnTo) targetFrontend = parsed.returnTo;
+    } catch {}
+  }
+
+  if (!code) return res.redirect(`${targetFrontend}/login?error=missing_code`);
 
   try {
     const { tokens } = await oauthClient.getToken(code);
@@ -33,7 +45,7 @@ authRouter.get("/google/callback", async (req, res) => {
     });
     const payload = ticket.getPayload();
     if (!payload || !payload.sub || !payload.email) {
-      return res.redirect(`${env.frontendUrl}/login?error=no_profile`);
+      return res.redirect(`${targetFrontend}/login?error=no_profile`);
     }
 
     const { rows } = await pool.query(
@@ -47,21 +59,28 @@ authRouter.get("/google/callback", async (req, res) => {
     const userId = rows[0].id;
 
     const sessionToken = jwt.sign({ userId }, env.jwtSecret, { expiresIn: "7d" });
+    const isSecure = targetFrontend.startsWith("https://") || req.secure;
     res.cookie("session", sessionToken, {
       httpOnly: true,
-      sameSite: "lax",
+      sameSite: isSecure ? "none" : "lax",
+      secure: isSecure,
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    res.redirect(`${env.frontendUrl}/dashboard`);
+    res.redirect(`${targetFrontend}/dashboard`);
   } catch (err) {
     console.error("Google OAuth callback failed", err);
-    res.redirect(`${env.frontendUrl}/login?error=oauth_failed`);
+    res.redirect(`${targetFrontend}/login?error=oauth_failed`);
   }
 });
 
 authRouter.post("/logout", (req, res) => {
-  res.clearCookie("session");
+  const isSecure = env.frontendUrl.startsWith("https://") || req.secure;
+  res.clearCookie("session", {
+    httpOnly: true,
+    sameSite: isSecure ? "none" : "lax",
+    secure: isSecure,
+  });
   res.json({ ok: true });
 });
 
