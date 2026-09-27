@@ -8,6 +8,14 @@ const nextConfig = {
         source: "/api/:path*",
         destination: `${backendUrl}/api/:path*`,
       },
+      {
+        source: "/admin/queues",
+        destination: `${backendUrl}/admin/queues`,
+      },
+      {
+        source: "/admin/queues/:path*",
+        destination: `${backendUrl}/admin/queues/:path*`,
+      },
     ];
   },
 };
