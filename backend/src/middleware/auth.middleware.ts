@@ -12,7 +12,11 @@ declare global {
 }
 
 export function requireAuth(req: Request, res: Response, next: NextFunction) {
-  const token = req.cookies?.session;
+  const token =
+    req.cookies?.session ||
+    (req.headers.authorization?.startsWith("Bearer ")
+      ? req.headers.authorization.slice(7)
+      : null);
   if (!token) {
     return res.status(401).json({ error: "Not authenticated" });
   }

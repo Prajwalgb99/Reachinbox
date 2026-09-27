@@ -67,10 +67,36 @@ authRouter.get("/google/callback", async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    res.redirect(`${targetFrontend}/dashboard`);
+    res.redirect(`${targetFrontend}/dashboard?token=${sessionToken}`);
   } catch (err) {
     console.error("Google OAuth callback failed", err);
     res.redirect(`${targetFrontend}/login?error=oauth_failed`);
+  }
+});
+
+authRouter.post("/demo-login", async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `INSERT INTO users (google_id, email, name, avatar_url)
+       VALUES ($1, $2, $3, $4)
+       ON CONFLICT (google_id) DO UPDATE
+         SET email = EXCLUDED.email, name = EXCLUDED.name, avatar_url = EXCLUDED.avatar_url
+       RETURNING id, email, name, avatar_url`,
+      ["demo_evaluator", "evaluator@reachinbox.ai", "ReachInbox Evaluator", "https://api.dicebear.com/7.x/bottts/svg?seed=reachinbox"]
+    );
+    const user = rows[0];
+    const sessionToken = jwt.sign({ userId: user.id }, env.jwtSecret, { expiresIn: "7d" });
+    const isSecure = env.frontendUrl.startsWith("https://") || req.secure;
+    res.cookie("session", sessionToken, {
+      httpOnly: true,
+      sameSite: isSecure ? "none" : "lax",
+      secure: isSecure,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+    res.json({ user, token: sessionToken });
+  } catch (err) {
+    console.error("Demo login error", err);
+    res.status(500).json({ error: "Could not create demo session" });
   }
 });
 
@@ -85,7 +111,11 @@ authRouter.post("/logout", (req, res) => {
 });
 
 authRouter.get("/me", async (req, res) => {
-  const token = req.cookies?.session;
+  const token =
+    req.cookies?.session ||
+    (req.headers.authorization?.startsWith("Bearer ")
+      ? req.headers.authorization.slice(7)
+      : null);
   if (!token) return res.status(401).json({ error: "Not authenticated" });
   try {
     const { userId } = jwt.verify(token, env.jwtSecret) as { userId: string };

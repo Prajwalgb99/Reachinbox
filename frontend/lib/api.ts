@@ -4,10 +4,12 @@ export const API_BASE =
     : (process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000");
 
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const token = typeof window !== "undefined" ? localStorage.getItem("session_token") : null;
   const res = await fetch(`${API_BASE}${path}`, {
     ...options,
     credentials: "include",
     headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(options.body && !(options.body instanceof FormData)
         ? { "Content-Type": "application/json" }
         : {}),
@@ -56,7 +58,11 @@ export interface SentEmail {
 
 export const api = {
   me: () => request<{ user: User }>("/api/auth/me"),
-  logout: () => request<{ ok: true }>("/api/auth/logout", { method: "POST" }),
+  demoLogin: () => request<{ user: User; token: string }>("/api/auth/demo-login", { method: "POST" }),
+  logout: () => {
+    if (typeof window !== "undefined") localStorage.removeItem("session_token");
+    return request<{ ok: true }>("/api/auth/logout", { method: "POST" });
+  },
 
   senders: {
     list: () => request<{ senders: Sender[] }>("/api/senders"),

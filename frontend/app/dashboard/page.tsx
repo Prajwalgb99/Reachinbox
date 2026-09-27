@@ -42,6 +42,13 @@ export default function DashboardPage() {
   }, []);
 
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      const urlToken = new URLSearchParams(window.location.search).get("token");
+      if (urlToken) {
+        localStorage.setItem("session_token", urlToken);
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    }
     api
       .me()
       .then((r) => {
