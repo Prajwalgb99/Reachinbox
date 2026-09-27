@@ -30,7 +30,7 @@ export const env = {
 
   workerConcurrency: parseInt(required("WORKER_CONCURRENCY", "5"), 10),
   minDelayMsBetweenSends: parseInt(required("MIN_DELAY_MS_BETWEEN_SENDS", "2000"), 10),
-  maxEmailsPerHourPerSender: parseInt(required("MAX_EMAILS_PER_HOUR_PER_SENDER", "200"), 10),
+  maxEmailsPerHourPerSender: parseInt(required("MAX_EMAILS_PER_HOUR_PER_SENDER", "2"), 10),
 
   googleClientId: required("GOOGLE_CLIENT_ID"),
   googleClientSecret: required("GOOGLE_CLIENT_SECRET"),

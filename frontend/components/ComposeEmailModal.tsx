@@ -20,7 +20,7 @@ export default function ComposeEmailModal({ open, onClose, onScheduled }: Props)
   const [fileName, setFileName] = useState("");
   const [startTime, setStartTime] = useState("");
   const [delayBetweenEmailsSec, setDelayBetweenEmailsSec] = useState(2);
-  const [hourlyLimit, setHourlyLimit] = useState(200);
+  const [hourlyLimit, setHourlyLimit] = useState(2);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [showSchedulePicker, setShowSchedulePicker] = useState(false);

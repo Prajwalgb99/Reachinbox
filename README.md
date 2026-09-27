@@ -114,15 +114,14 @@ Per submission guidelines, access has been granted to:
 
 ---
 
-## 🧑‍⚖️ Evaluator / Reviewer Quick-Start Guide
+## 🚀 Live & Local Setup Guide
 
-### ⚡ Option 1 — Instant Demo (No Setup Required)
+### 🛠️ Prerequisites
+- Node.js (v18 or v20+)
+- Docker Desktop
+- Git
 
-The login page has a built-in **"⚡ Instant Demo / Evaluator Login"** button that bypasses Google OAuth entirely and logs you straight into the dashboard with a pre-seeded evaluator account.
-
-**However**, to see live email scheduling, BullMQ queue dispatch, and Slack alerts, you need the backend running. Here is the fastest path:
-
-**Prerequisites**: Docker Desktop + Node.js v18+ installed.
+### Quick-Start (Run Locally)
 
 ```bash
 # 1. Clone the repo
@@ -132,18 +131,21 @@ cd Reachinbox
 # 2. Start PostgreSQL, Redis, and Elasticsearch (one command)
 docker compose up -d
 
-# 3. Install and start the backend (runs migrations automatically on first boot)
+# 3. Start Backend
 cd backend
 npm install
-npm run migrate:dev   # Only needed first time
+npm run migrate:dev
 npm run dev
+# (Runs on http://localhost:4000)
+
+# 4. Start Frontend (in a second terminal)
+cd frontend
+npm install
+npm run dev
+# (Runs on http://localhost:3000)
 ```
 
-Then open **[http://localhost:3000/login](http://localhost:3000/login)** (local frontend) **OR** visit **[https://reachinbox-e44m.vercel.app/login](https://reachinbox-e44m.vercel.app/login)** (Vercel) and click **⚡ Instant Demo / Evaluator Login**.
-
----
-
-### 🌍 Option 2 — Full Cloud Access (Connect Vercel to Local Backend)
+Open **[http://localhost:3000/login](http://localhost:3000/login)** and click **Login with Google**.
 
 To expose your local backend to the live Vercel frontend over HTTPS:
 
@@ -300,10 +302,11 @@ npm run dev
    - Notice the startup log: `Reconciling pending email jobs from DB...`.
    - When the time arrives, the email dispatches successfully without duplicating.
 5. **Slack Rate Limit Notification**:
-   - In the sidebar, click **Connect Slack** and select a channel (e.g. `#alerts`).
-   - Set `MAX_EMAILS_PER_HOUR_PER_SENDER=1` in `backend/.env`.
-   - Schedule a batch of 2 emails. The first sends; the second triggers the hourly cap.
-   - Show the live rate-limit alert posting directly to your Slack channel.
+   - In the sidebar, click **Connect Slack** and select a channel (e.g. `#general` or `#alerts`).
+   - The system is configured with `MAX_EMAILS_PER_HOUR_PER_SENDER=2` (2 emails per hour).
+   - Compose a batch with **3 recipients** (e.g., `lead1@test.com`, `lead2@test.com`, `lead3@test.com`).
+   - The first 2 emails send immediately; the 3rd email immediately triggers the hourly rate limit.
+   - The 3rd email's status changes to `rate_limited` on the dashboard, and an instant alert is posted directly to your **Slack channel**!
 
 ---
 
