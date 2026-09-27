@@ -15,6 +15,7 @@ import { ensureIndex } from "./search/elasticsearch";
 import "./queue/emailWorker"; // starts the worker in-process for local/dev convenience
 
 const app = express();
+app.set("trust proxy", 1);
 
 app.use(
   cors({
