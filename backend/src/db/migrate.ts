@@ -3,7 +3,13 @@ import path from "path";
 import { pool } from "./pool";
 
 async function migrate() {
-  const dir = path.join(__dirname, "migrations");
+  const candidates = [
+    path.join(__dirname, "migrations"),
+    path.join(__dirname, "../../src/db/migrations"),
+    path.join(process.cwd(), "src", "db", "migrations"),
+    path.join(process.cwd(), "dist", "db", "migrations"),
+  ];
+  const dir = candidates.find((d) => fs.existsSync(d)) || path.join(__dirname, "migrations");
   const files = fs.readdirSync(dir).filter((f) => f.endsWith(".sql")).sort();
 
   for (const file of files) {

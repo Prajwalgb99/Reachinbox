@@ -1,0 +1,93 @@
+version: "3.9"
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: reachinbox-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: reachinbox-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-reachinbox}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-reachinbox}
+      POSTGRES_DB: ${POSTGRES_DB:-reachinbox}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.4
+    container_name: reachinbox-es
+    restart: always
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+    volumes:
+      - es-data:/usr/share/elasticsearch/data
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: reachinbox-backend
+    restart: always
+    depends_on:
+      - postgres
+      - redis
+      - elasticsearch
+    environment:
+      PORT: 4000
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      SESSION_SECRET: ${SESSION_SECRET:-reachinbox_super_secret_session_key_production}
+      JWT_SECRET: ${JWT_SECRET:-reachinbox_super_secret_jwt_key_production}
+      DATABASE_URL: postgres://${POSTGRES_USER:-reachinbox}:${POSTGRES_PASSWORD:-reachinbox}@postgres:5432/${POSTGRES_DB:-reachinbox}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+      ELASTICSEARCH_INDEX: emails
+      ETHEREAL_USER: ${ETHEREAL_USER:-}
+      ETHEREAL_PASS: ${ETHEREAL_PASS:-}
+      WORKER_CONCURRENCY: ${WORKER_CONCURRENCY:-5}
+      MIN_DELAY_MS_BETWEEN_SENDS: ${MIN_DELAY_MS_BETWEEN_SENDS:-2000}
+      MAX_EMAILS_PER_HOUR_PER_SENDER: ${MAX_EMAILS_PER_HOUR_PER_SENDER:-200}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GOOGLE_CALLBACK_URL: ${GOOGLE_CALLBACK_URL:-http://localhost:4000/api/auth/google/callback}
+      SLACK_CLIENT_ID: ${SLACK_CLIENT_ID:-}
+      SLACK_CLIENT_SECRET: ${SLACK_CLIENT_SECRET:-}
+      SLACK_REDIRECT_URI: ${SLACK_REDIRECT_URI:-http://localhost:4000/api/slack/oauth/callback}
+    ports:
+      - "4000:4000"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4000}
+    container_name: reachinbox-frontend
+    restart: always
+    depends_on:
+      - backend
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4000}
+    ports:
+      - "3000:3000"
+
+volumes:
+  redis-data:
+  pg-data:
+  es-data:

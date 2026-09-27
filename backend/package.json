@@ -5,10 +5,11 @@
   "main": "dist/index.js",
   "scripts": {
     "dev": "nodemon --config nodemon.json --exec ts-node src/index.ts",
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json && node -e \"require('fs').cpSync('src/db/migrations', 'dist/db/migrations', {recursive: true, force: true})\"",
     "start": "node dist/index.js",
-    "migrate": "ts-node src/db/migrate.ts",
-    "worker": "ts-node src/queue/emailWorker.ts"
+    "migrate": "node dist/db/migrate.js",
+    "migrate:dev": "ts-node src/db/migrate.ts",
+    "worker": "node dist/queue/emailWorker.js"
   },
   "dependencies": {
     "@bull-board/api": "^5.20.0",
