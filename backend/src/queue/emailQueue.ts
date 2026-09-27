@@ -1,10 +1,10 @@
 import { Queue } from "bullmq";
-import { redisConnection } from "./connection";
+import { redisOptions } from "./connection";
 
 export const EMAIL_QUEUE_NAME = "email-send-queue";
 
 export const emailQueue = new Queue(EMAIL_QUEUE_NAME, {
-  connection: redisConnection,
+  connection: redisOptions as any,
   defaultJobOptions: {
     attempts: 5,
     backoff: { type: "exponential", delay: 5000 },

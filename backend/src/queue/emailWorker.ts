@@ -1,5 +1,5 @@
 import { Worker, Job, DelayedError } from "bullmq";
-import { redisConnection } from "./connection";
+import { redisOptions } from "./connection";
 import { EMAIL_QUEUE_NAME, EmailJobData } from "./emailQueue";
 import { env } from "../config/env";
 import { pool } from "../db/pool";
@@ -128,7 +128,7 @@ export const emailWorker = new Worker<EmailJobData>(
   EMAIL_QUEUE_NAME,
   async (job, token) => processEmailJob(job, token),
   {
-    connection: redisConnection,
+    connection: redisOptions as any,
     concurrency: env.workerConcurrency,
     // Global throttle across the whole worker: enforces the required
     // "minimum delay between individual email sends" without a cron job —
